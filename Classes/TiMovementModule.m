@@ -41,9 +41,10 @@
 	// this method is called when the module is first loaded
 	// you *must* call the superclass
 	[super startup];
-	    
+    
     locationManager = [[CLLocationManager alloc] init];
     locationManager.desiredAccuracy = kCLLocationAccuracyBestForNavigation;
+    locationManager.distanceFilter = kCLDistanceFilterNone;
     
     motionManager = [[CMMotionManager alloc] init];
     
@@ -74,7 +75,7 @@
 
 - (void)startMovementUpdates:(id)args
 {
-    NSLog(@"[INFO] starting updates...");
+    NSLog(@"[INFO] startingg updates...");
     [locationManager startUpdatingLocation];
     [motionManager startDeviceMotionUpdatesUsingReferenceFrame:CMAttitudeReferenceFrameXTrueNorthZVertical];
     NSLog(@"[INFO] started updates.");
@@ -86,29 +87,24 @@
     [motionManager stopDeviceMotionUpdates];
 }
 
-- (NSDictionary *)currentMovement
+- (NSDictionary *) currentMovement
 {
     NSDictionary *location = [NSDictionary dictionaryWithObjectsAndKeys:
                               [NSNumber numberWithDouble:locationManager.location.coordinate.longitude], @"longitude",
                               [NSNumber numberWithDouble:locationManager.location.coordinate.latitude], @"latitude",
                               [NSNumber numberWithDouble:locationManager.location.altitude], @"altitude",
                               nil];
-    
-    
-    
+
     NSDictionary *rotation = [NSDictionary dictionaryWithObjectsAndKeys:
                               [NSNumber numberWithDouble:motionManager.deviceMotion.attitude.roll], @"roll",
                               [NSNumber numberWithDouble:motionManager.deviceMotion.attitude.pitch], @"pitch",
                               [NSNumber numberWithDouble:motionManager.deviceMotion.attitude.yaw], @"yaw",
                               nil];
-    
-    
     NSDictionary *movementData = [NSDictionary dictionaryWithObjectsAndKeys:
                                   location, @"location",
                                   rotation, @"rotation",
                                   nil];
         
-  
     return movementData;
 }
 

@@ -8,7 +8,7 @@
 #import <CoreLocation/CoreLocation.h>
 #import <CoreMotion/CoreMotion.h>
 
-@interface TiMovementModule : TiModule 
+@interface TiMovementModule : TiModule
 
 @property (nonatomic, readonly) NSDictionary *currentMovement;
 
