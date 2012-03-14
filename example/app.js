@@ -1,39 +1,108 @@
-// This is a test harness for your module
-// You should do something interesting in this harness 
-// to test out the module and to provide instructions 
-// to users on how to use it by example.
+// this sets the background color of the master UIView (when there are no windows/tab groups on it)
+Titanium.UI.setBackgroundColor('#000');
 
-
-// open a single window
-var window = Ti.UI.createWindow({
-	backgroundColor:'white'
+var stop = false;
+var win1 = Titanium.UI.createWindow({
+	title : 'Rotation',
+	backgroundColor : '#fff'
 });
-var label = Ti.UI.createLabel();
-window.add(label);
-window.open();
 
-// TODO: write your module tests here
+var roll = Titanium.UI.createLabel({
+	color : '#999',
+	text : 'Roll:',
+	top : 200,
+	left : 0,
+	height : 30,
+	//font:{fontSize:20,fontFamily:'Helvetica Neue'},
+	//textAlign:'center',
+	width : 'auto'
+});
+roll.addEventListener('click', function(e) {
+	stop = true;
+	alert('click')
+});
+var pitch = Titanium.UI.createLabel({
+	color : '#999',
+	top : 230,
+	left : 0,
+	height : 30,
+	text : 'Pitch:',
+	//font:{fontSize:20,fontFamily:'Helvetica Neue'},
+	//textAlign:'center',
+	width : 'auto'
+});
+
+var yaw = Titanium.UI.createLabel({
+	color : '#999',
+	top : 260,
+	left : 0,
+	height : 30,
+	text : 'Yaw:',
+	//font:{fontSize:20,fontFamily:'Helvetica Neue'},
+	//textAlign:'center',
+	width : 'auto'
+});
+
+var lat = Titanium.UI.createLabel({
+	color : '#999',
+	top : 290,
+	left : 0,
+	height : 30,
+	text : 'Lat:',
+	//font:{fontSize:20,fontFamily:'Helvetica Neue'},
+	//textAlign:'center',
+	width : 'auto'
+});
+
+var lon = Titanium.UI.createLabel({
+	color : '#999',
+	top : 320,
+	left : 0,
+	height : 30,
+	text : 'Lon:',
+	//font:{fontSize:20,fontFamily:'Helvetica Neue'},
+	//textAlign:'center',
+	width : 'auto'
+});
+
+var alt = Titanium.UI.createLabel({
+	color : '#999',
+	top : 350,
+	left : 0,
+	height : 30,
+	text : 'Alt:',
+	//font:{fontSize:20,fontFamily:'Helvetica Neue'},
+	//textAlign:'center',
+	width : 'auto'
+});
+
+win1.add(roll);
+win1.add(pitch);
+win1.add(yaw);
+win1.add(lat);
+win1.add(lon);
+win1.add(alt);
+
+win1.open();
+
+
+var curr;
 var movement = require('ti.movement');
-Ti.API.info("module is => " + movement);
+movement.startMovementUpdates();
+function s() {
+	if(!stop) {
+		curr = movement.currentMovement;	
+		//Ti.API.info(curr)
+	
+		roll.setText('Roll: ' + curr.rotation.roll);
+		pitch.setText('Pitch: ' + curr.rotation.pitch);
+		yaw.setText('Yaw: ' + curr.rotation.yaw);
+		lat.setText('Lat: ' + curr.location.latitude);
+		lon.setText('Lon: ' + curr.location.longitude);
+		alt.setText('Alt: ' + curr.location.altitude);
+				
+		setTimeout(s, 300);
+	} else return;
 
-label.text = movement.example();
-
-Ti.API.info("module exampleProp is => " + movement.exampleProp);
-movement.exampleProp = "This is a test value";
-
-if (Ti.Platform.name == "android") {
-	var proxy = movement.createExample({
-		message: "Creating an example Proxy",
-		backgroundColor: "red",
-		width: 100,
-		height: 100,
-		top: 100,
-		left: 150
-	});
-
-	proxy.printMessage("Hello world!");
-	proxy.message = "Hi world!.  It's me again.";
-	proxy.printMessage("Hello world!");
-	window.add(proxy);
 }
-
+setTimeout(s, 0);

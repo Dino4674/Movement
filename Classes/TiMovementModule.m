@@ -34,13 +34,11 @@
     return @"ti.movement";
 }
 
-#pragma mark Lifecycle
 
--(void)startup
-{
-	// this method is called when the module is first loaded
-	// you *must* call the superclass
-	[super startup];
+
+#pragma mark MainThreadSelectors
+
+-(void)initManagers {
     
     locationManager = [[CLLocationManager alloc] init];
     locationManager.desiredAccuracy = kCLLocationAccuracyBestForNavigation;
@@ -48,8 +46,44 @@
     
     motionManager = [[CMMotionManager alloc] init];
     
+}
+
+
+-(void)startUpdating {
+    
+    NSLog(@"[INFO] selector starting updates...");
+    
+     [locationManager startUpdatingLocation];
+     [motionManager startDeviceMotionUpdatesUsingReferenceFrame:CMAttitudeReferenceFrameXTrueNorthZVertical];
+    NSLog(@"[INFO] selector started updates...");
+
+
+}
+
+#pragma mark Lifecycle
+
+-(void)startup
+{
+	// this method is called when the module is first loaded
+	// you *must* call the superclass
+	[super startup];
+   
+    
+    
+    locationManager = [[CLLocationManager alloc] init];
+    locationManager.desiredAccuracy = kCLLocationAccuracyBestForNavigation;
+    locationManager.delegate = self;
+    
+    motionManager = [[CMMotionManager alloc] init];
+    
+     
+    
+  //  TiThreadPerformOnMainThread(^{[self initManagers];}, NO);
+
     NSLog(@"[INFO] %@ loaded",self);
 }
+
+
 
 -(void)shutdown:(id)sender
 {
@@ -61,6 +95,7 @@
 	[super shutdown:sender];
 }
 
+
 #pragma mark Cleanup 
 
 -(void)dealloc
@@ -71,13 +106,23 @@
 	[super dealloc];
 }
 
+#pragma mark Delegates
+
+-(void)locationManager:(CLLocationManager *)manager didUpdateToLocation:(CLLocation *)newLocation fromLocation:(CLLocation *)oldLocation {
+    NSLog(@"[INFO] delegate ..."); // this is not being called
+}
+
+
 #pragma Public APIs
 
 - (void)startMovementUpdates:(id)args
 {
-    NSLog(@"[INFO] startingg updates...");
-    [locationManager startUpdatingLocation];
-    [motionManager startDeviceMotionUpdatesUsingReferenceFrame:CMAttitudeReferenceFrameXTrueNorthZVertical];
+    NSLog(@"[INFO] starting updates...");
+    
+    TiThreadPerformOnMainThread(^{[self startUpdating];}, NO);
+    
+   // [locationManager startUpdatingLocation];
+   // [motionManager startDeviceMotionUpdatesUsingReferenceFrame:CMAttitudeReferenceFrameXTrueNorthZVertical];
     NSLog(@"[INFO] started updates.");
 }
 
