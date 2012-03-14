@@ -101,7 +101,7 @@ function s() {
 		lon.setText('Lon: ' + curr.location.longitude);
 		alt.setText('Alt: ' + curr.location.altitude);
 				
-		setTimeout(s, 300);
+		setTimeout(s, 0);
 	} else return;
 
 }
