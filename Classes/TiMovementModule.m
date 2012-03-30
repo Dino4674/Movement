@@ -36,25 +36,46 @@
 
 #pragma mark MainThreadSelectors
 
+MAKE_SYSTEM_PROP_DBL(LOCATION_ACCURACY_BEST,kCLLocationAccuracyBest);
+MAKE_SYSTEM_PROP_DBL(LOCATION_ACCURACY_BEST_FOR_NAVIGATION, kCLLocationAccuracyBestForNavigation);
+MAKE_SYSTEM_PROP_DBL(LOCATION_ACCURACY_THREE_KILOMETERS, kCLLocationAccuracyThreeKilometers);
+
+MAKE_SYSTEM_PROP_DBL(ROTATION_REFERENCE_FRAME_TRUE_NORTH, CMAttitudeReferenceFrameXTrueNorthZVertical);
+MAKE_SYSTEM_PROP_DBL(ROTATION_REFERENCE_FRAME_MAGNETIC_NORTH, CMAttitudeReferenceFrameXMagneticNorthZVertical);
+MAKE_SYSTEM_PROP_DBL(ROTATION_REFERENCE_FRAME_CORRECTED, CMAttitudeReferenceFrameXArbitraryCorrectedZVertical);
+
 -(void)initManagers {
     
-    NSLog(@"[INFO] initializing module...");
+    //NSLog(@"[INFO] initializing module...");
     
     locationManager = [[CLLocationManager alloc] init];
-    locationManager.desiredAccuracy = kCLLocationAccuracyBestForNavigation;
-    
     motionManager = [[CMMotionManager alloc] init];
     
-    NSLog(@"[INFO] initialized module.");
+    //NSLog(@"[INFO] initialized module.");
 }
 
 
--(void)startUpdating {
+-(void)startUpdating:(id)args {
     
-    NSLog(@"[INFO] selector starting updates...");
+    NSLog(@"[INFO] selector starting updates...");    
+
+    ENSURE_SINGLE_ARG(args, NSDictionary);
     
+    NSNumber *locationAccuracy = [args objectForKey : @"locationAccuracy"];
+    NSNumber *rotationReferenceFrame = [args objectForKey : @"rotationReferenceFrame"];
+
+    
+    NSLog(@"[INFO] loc: %@ ", locationAccuracy);
+    NSLog(@"[INFO] rot: %@ ", rotationReferenceFrame);
+    
+    double a = [locationAccuracy doubleValue];
+    double r = [rotationReferenceFrame doubleValue];
+    
+    //locationManager.desiredAccuracy = kCLLocationAccuracyBestForNavigation;
+    locationManager.desiredAccuracy = [locationAccuracy doubleValue];
     [locationManager startUpdatingLocation];
-    [motionManager startDeviceMotionUpdatesUsingReferenceFrame:CMAttitudeReferenceFrameXTrueNorthZVertical];
+    //[motionManager startDeviceMotionUpdatesUsingReferenceFrame:CMAttitudeReferenceFrameXTrueNorthZVertical];
+    [motionManager startDeviceMotionUpdatesUsingReferenceFrame:[rotationReferenceFrame doubleValue]];
     
     NSLog(@"[INFO] selector started updates.");
 }
@@ -108,18 +129,17 @@
 
 #pragma Public APIs
 
+
+
 - (void)startMovementUpdates:(id)args
 {
-    NSLog(@"[INFO] starting updates...");
-    TiThreadPerformOnMainThread(^{[self startUpdating];}, NO);
-    NSLog(@"[INFO] started updates.");
+    
+    TiThreadPerformOnMainThread(^{[self startUpdating:args];}, NO);
 }
 
 - (void)stopMovementUpdates:(id)args
 {
-    NSLog(@"[INFO] stopping updates...");
     TiThreadPerformOnMainThread(^{[self stopUpdating];}, NO);
-    NSLog(@"[INFO] stopped updates.");
 }
 
 - (NSDictionary *) currentMovement
@@ -129,7 +149,7 @@
                               [NSNumber numberWithDouble:locationManager.location.coordinate.latitude], @"latitude",
                               [NSNumber numberWithDouble:locationManager.location.altitude], @"altitude",
                               nil];
-
+    
     NSDictionary *rotation = [NSDictionary dictionaryWithObjectsAndKeys:
                               [NSNumber numberWithDouble:motionManager.deviceMotion.attitude.roll], @"roll",
                               [NSNumber numberWithDouble:motionManager.deviceMotion.attitude.pitch], @"pitch",

@@ -88,7 +88,20 @@ win1.open();
 
 var curr;
 var movement = require('ti.movement');
-movement.startMovementUpdates();
+
+Ti.API.info('Accuracy three: ' + movement.LOCATION_ACCURACY_THREE_KILOMETERS)
+Ti.API.info('Accuracy best: ' + movement.LOCATION_ACCURACY_BEST)
+Ti.API.info('Accuracy navig: ' + movement.LOCATION_ACCURACY_BEST_FOR_NAVIGATION)
+
+Ti.API.info('Ref frame true: ' + movement.ROTATION_REFERENCE_FRAME_TRUE_NORTH)
+Ti.API.info('Ref frame magn: ' + movement.ROTATION_REFERENCE_FRAME_MAGNETIC_NORTH)
+Ti.API.info('Ref frame corr: ' + movement.ROTATION_REFERENCE_FRAME_CORRECTED)
+
+movement.startMovementUpdates({
+	locationAccuracy : movement.LOCATION_ACCURACY_BEST_FOR_NAVIGATION,
+	rotationReferenceFrame : movement.ROTATION_REFERENCE_FRAME_TRUE_NORTH
+});
+
 function s() {
 	if(!stop) {
 		curr = movement.currentMovement;	
