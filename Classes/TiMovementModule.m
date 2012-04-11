@@ -34,7 +34,6 @@
     return @"ti.movement";
 }
 
-#pragma mark MainThreadSelectors
 
 MAKE_SYSTEM_PROP_DBL(LOCATION_ACCURACY_BEST,kCLLocationAccuracyBest);
 MAKE_SYSTEM_PROP_DBL(LOCATION_ACCURACY_BEST_FOR_NAVIGATION, kCLLocationAccuracyBestForNavigation);
@@ -44,51 +43,76 @@ MAKE_SYSTEM_PROP_DBL(ROTATION_REFERENCE_FRAME_TRUE_NORTH, CMAttitudeReferenceFra
 MAKE_SYSTEM_PROP_DBL(ROTATION_REFERENCE_FRAME_MAGNETIC_NORTH, CMAttitudeReferenceFrameXMagneticNorthZVertical);
 MAKE_SYSTEM_PROP_DBL(ROTATION_REFERENCE_FRAME_CORRECTED, CMAttitudeReferenceFrameXArbitraryCorrectedZVertical);
 
+#pragma mark MainThreadSelectors
+
 -(void)initManagers {
-    
-    //NSLog(@"[INFO] initializing module...");
-    
     locationManager = [[CLLocationManager alloc] init];
     motionManager = [[CMMotionManager alloc] init];
-    
-    //NSLog(@"[INFO] initialized module.");
 }
 
 
 -(void)startUpdating:(id)args {
     
-    NSLog(@"[INFO] selector starting updates...");    
+    NSLog(@"[INFO] starting movement updates...");    
 
     ENSURE_SINGLE_ARG(args, NSDictionary);
     
-    NSNumber *locationAccuracy = [args objectForKey : @"locationAccuracy"];
-    NSNumber *rotationReferenceFrame = [args objectForKey : @"rotationReferenceFrame"];
+    NSNumber *startLocationUpdates = [args objectForKey : @"location"];
+    NSNumber *startRotationUpdates = [args objectForKey : @"rotation"];
+    
+    
+    if([startRotationUpdates isEqualToNumber:[NSNumber numberWithInt:1]]) {
+        
+        NSNumber *rotationReferenceFrame = [args objectForKey : @"rotationReferenceFrame"];
+        
+        if (rotationReferenceFrame != NULL) {
+            
+            if([rotationReferenceFrame isEqualToNumber:self.ROTATION_REFERENCE_FRAME_TRUE_NORTH]) {
+
+                locationManager.desiredAccuracy = kCLLocationAccuracyThreeKilometers;
+                [locationManager startUpdatingLocation];   
+            }
+            
+            NSLog(@"[INFO] rotation %@  :", rotationReferenceFrame);    
+            
+            
+            [motionManager startDeviceMotionUpdatesUsingReferenceFrame:[rotationReferenceFrame doubleValue]];
+        } else {
+            
+            NSLog(@"[INFO] rotation %@  :", rotationReferenceFrame);    
+
+            
+            [motionManager startDeviceMotionUpdatesUsingReferenceFrame:CMAttitudeReferenceFrameXArbitraryCorrectedZVertical];
+        }
+    }
+    
+    
+    if([startLocationUpdates isEqualToNumber:[NSNumber numberWithInt:1]]) {
+        
+        NSNumber *locationAccuracy = [args objectForKey : @"locationAccuracy"];
+        
+        if(locationAccuracy != NULL) {
+            locationManager.desiredAccuracy = [locationAccuracy doubleValue];
+        } else {
+            locationManager.desiredAccuracy = kCLLocationAccuracyThreeKilometers;
+        }
+        
+        [locationManager startUpdatingLocation];   
+    }
 
     
-    NSLog(@"[INFO] loc: %@ ", locationAccuracy);
-    NSLog(@"[INFO] rot: %@ ", rotationReferenceFrame);
-    
-    double a = [locationAccuracy doubleValue];
-    double r = [rotationReferenceFrame doubleValue];
-    
-    //locationManager.desiredAccuracy = kCLLocationAccuracyBestForNavigation;
-    locationManager.desiredAccuracy = [locationAccuracy doubleValue];
-    [locationManager startUpdatingLocation];
-    //[motionManager startDeviceMotionUpdatesUsingReferenceFrame:CMAttitudeReferenceFrameXTrueNorthZVertical];
-    [motionManager startDeviceMotionUpdatesUsingReferenceFrame:[rotationReferenceFrame doubleValue]];
-    
-    NSLog(@"[INFO] selector started updates.");
+    NSLog(@"[INFO] started movement updates.");
 }
 
 
 -(void)stopUpdating {
     
-    NSLog(@"[INFO] selector stopping updates...");
+    NSLog(@"[INFO] stopping movement updates...");
     
     [locationManager stopUpdatingLocation];
     [motionManager stopDeviceMotionUpdates];
     
-    NSLog(@"[INFO] selector stopped updates.");
+    NSLog(@"[INFO] stopped movement updates.");
 }
 
 #pragma mark Lifecycle

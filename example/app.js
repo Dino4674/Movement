@@ -98,8 +98,10 @@ Ti.API.info('Ref frame magn: ' + movement.ROTATION_REFERENCE_FRAME_MAGNETIC_NORT
 Ti.API.info('Ref frame corr: ' + movement.ROTATION_REFERENCE_FRAME_CORRECTED)
 
 movement.startMovementUpdates({
-	locationAccuracy : movement.LOCATION_ACCURACY_BEST_FOR_NAVIGATION,
-	rotationReferenceFrame : movement.ROTATION_REFERENCE_FRAME_TRUE_NORTH
+	//location : false,
+	rotation : true,
+	//locationAccuracy : movement.LOCATION_ACCURACY_BEST_FOR_NAVIGATION,
+	//rotationReferenceFrame : movement.ROTATION_REFERENCE_FRAME_CORRECTED
 });
 
 function s() {
