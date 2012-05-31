@@ -53,8 +53,6 @@ MAKE_SYSTEM_PROP_DBL(ROTATION_REFERENCE_FRAME_CORRECTED, CMAttitudeReferenceFram
 
 -(void)startUpdating:(id)args {
     
-    NSLog(@"[INFO] starting movement updates...");    
-
     ENSURE_SINGLE_ARG(args, NSDictionary);
     
     NSNumber *startLocationUpdates = [args objectForKey : @"location"];
@@ -68,20 +66,13 @@ MAKE_SYSTEM_PROP_DBL(ROTATION_REFERENCE_FRAME_CORRECTED, CMAttitudeReferenceFram
         if (rotationReferenceFrame != NULL) {
             
             if([rotationReferenceFrame isEqualToNumber:self.ROTATION_REFERENCE_FRAME_TRUE_NORTH]) {
-
+                
                 locationManager.desiredAccuracy = kCLLocationAccuracyThreeKilometers;
                 [locationManager startUpdatingLocation];   
             }
             
-            NSLog(@"[INFO] rotation %@  :", rotationReferenceFrame);    
-            
-            
             [motionManager startDeviceMotionUpdatesUsingReferenceFrame:[rotationReferenceFrame doubleValue]];
         } else {
-            
-            NSLog(@"[INFO] rotation %@  :", rotationReferenceFrame);    
-
-            
             [motionManager startDeviceMotionUpdatesUsingReferenceFrame:CMAttitudeReferenceFrameXArbitraryCorrectedZVertical];
         }
     }
@@ -99,16 +90,14 @@ MAKE_SYSTEM_PROP_DBL(ROTATION_REFERENCE_FRAME_CORRECTED, CMAttitudeReferenceFram
         
         [locationManager startUpdatingLocation];   
     }
-
+    
     
     NSLog(@"[INFO] started movement updates.");
 }
 
 
 -(void)stopUpdating {
-    
-    NSLog(@"[INFO] stopping movement updates...");
-    
+
     [locationManager stopUpdatingLocation];
     [motionManager stopDeviceMotionUpdates];
     
@@ -124,7 +113,7 @@ MAKE_SYSTEM_PROP_DBL(ROTATION_REFERENCE_FRAME_CORRECTED, CMAttitudeReferenceFram
 	[super startup];
     
     TiThreadPerformOnMainThread(^{[self initManagers];}, NO);
-
+    
     NSLog(@"[INFO] %@ loaded",self);
 }
 
@@ -183,7 +172,7 @@ MAKE_SYSTEM_PROP_DBL(ROTATION_REFERENCE_FRAME_CORRECTED, CMAttitudeReferenceFram
                                   location, @"location",
                                   rotation, @"rotation",
                                   nil];
-        
+    
     return movementData;
 }
 
