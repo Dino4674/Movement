@@ -8,6 +8,8 @@
 #import "TiBase.h"
 #import "TiHost.h"
 #import "TiUtils.h"
+#import <CoreLocation/CoreLocation.h>
+#import <CoreMotion/CoreMotion.h>
 
 @interface  TiMovementModule ()
 
@@ -34,74 +36,21 @@
     return @"ti.movement";
 }
 
-
-MAKE_SYSTEM_PROP_DBL(LOCATION_ACCURACY_BEST,kCLLocationAccuracyBest);
-MAKE_SYSTEM_PROP_DBL(LOCATION_ACCURACY_BEST_FOR_NAVIGATION, kCLLocationAccuracyBestForNavigation);
-MAKE_SYSTEM_PROP_DBL(LOCATION_ACCURACY_THREE_KILOMETERS, kCLLocationAccuracyThreeKilometers);
-
-MAKE_SYSTEM_PROP_DBL(ROTATION_REFERENCE_FRAME_TRUE_NORTH, CMAttitudeReferenceFrameXTrueNorthZVertical);
-MAKE_SYSTEM_PROP_DBL(ROTATION_REFERENCE_FRAME_MAGNETIC_NORTH, CMAttitudeReferenceFrameXMagneticNorthZVertical);
-MAKE_SYSTEM_PROP_DBL(ROTATION_REFERENCE_FRAME_CORRECTED, CMAttitudeReferenceFrameXArbitraryCorrectedZVertical);
-
-#pragma mark MainThreadSelectors
-
--(void)initManagers {
-    locationManager = [[CLLocationManager alloc] init];
-    motionManager = [[CMMotionManager alloc] init];
-}
-
-
--(void)startUpdating:(id)args {
+-(CLLocationManager *)locationManager {
     
-    ENSURE_SINGLE_ARG(args, NSDictionary);
-    
-    NSNumber *startLocationUpdates = [args objectForKey : @"location"];
-    NSNumber *startRotationUpdates = [args objectForKey : @"rotation"];
-    
-    
-    if([startRotationUpdates isEqualToNumber:[NSNumber numberWithInt:1]]) {
-        
-        NSNumber *rotationReferenceFrame = [args objectForKey : @"rotationReferenceFrame"];
-        
-        if (rotationReferenceFrame != NULL) {
-            
-            if([rotationReferenceFrame isEqualToNumber:self.ROTATION_REFERENCE_FRAME_TRUE_NORTH]) {
-                
-                locationManager.desiredAccuracy = kCLLocationAccuracyThreeKilometers;
-                [locationManager startUpdatingLocation];   
-            }
-            
-            [motionManager startDeviceMotionUpdatesUsingReferenceFrame:[rotationReferenceFrame doubleValue]];
-        } else {
-            [motionManager startDeviceMotionUpdatesUsingReferenceFrame:CMAttitudeReferenceFrameXArbitraryCorrectedZVertical];
-        }
+    if(locationManager == nil) {
+        locationManager = [[CLLocationManager alloc] init];
     }
     
-    
-    if([startLocationUpdates isEqualToNumber:[NSNumber numberWithInt:1]]) {
-        
-        NSNumber *locationAccuracy = [args objectForKey : @"locationAccuracy"];
-        
-        if(locationAccuracy != NULL) {
-            locationManager.desiredAccuracy = [locationAccuracy doubleValue];
-        } else {
-            locationManager.desiredAccuracy = kCLLocationAccuracyThreeKilometers;
-        }
-        
-        [locationManager startUpdatingLocation];   
-    }
-    
-    
-    NSLog(@"[INFO] started movement updates.");
+    return locationManager;
 }
 
-
--(void)stopUpdating {
-
-    [locationManager stopUpdatingLocation];
-    [motionManager stopDeviceMotionUpdates];
+-(CMMotionManager *)motionManager {
+    if(motionManager == nil) {
+        motionManager = [[CMMotionManager alloc] init];
+    }
     
-    NSLog(@"[INFO] stopped movement updates.");
+    return motionManager;
 }
 
 #pragma mark Lifecycle
@@ -111,8 +60,6 @@ MAKE_SYSTEM_PROP_DBL(ROTATION_REFERENCE_FRAME_CORRECTED, CMAttitudeReferenceFram
 	// this method is called when the module is first loaded
 	// you *must* call the superclass
 	[super startup];
-    
-    TiThreadPerformOnMainThread(^{[self initManagers];}, NO);
     
     NSLog(@"[INFO] %@ loaded",self);
 }
@@ -134,39 +81,86 @@ MAKE_SYSTEM_PROP_DBL(ROTATION_REFERENCE_FRAME_CORRECTED, CMAttitudeReferenceFram
 
 -(void)dealloc
 {
-	self.motionManager = nil;
-    self.locationManager = nil;
+    RELEASE_TO_NIL(self.locationManager);
+    RELEASE_TO_NIL(self.motionManager);
     
 	[super dealloc];
 }
 
+#pragma mark Constans
+
+MAKE_SYSTEM_PROP_DBL(LOCATION_ACCURACY_BEST,kCLLocationAccuracyBest);
+MAKE_SYSTEM_PROP_DBL(LOCATION_ACCURACY_BEST_FOR_NAVIGATION, kCLLocationAccuracyBestForNavigation);
+MAKE_SYSTEM_PROP_DBL(LOCATION_ACCURACY_THREE_KILOMETERS, kCLLocationAccuracyThreeKilometers);
+
+MAKE_SYSTEM_PROP_DBL(ROTATION_REFERENCE_FRAME_TRUE_NORTH, CMAttitudeReferenceFrameXTrueNorthZVertical);
+MAKE_SYSTEM_PROP_DBL(ROTATION_REFERENCE_FRAME_MAGNETIC_NORTH, CMAttitudeReferenceFrameXMagneticNorthZVertical);
+MAKE_SYSTEM_PROP_DBL(ROTATION_REFERENCE_FRAME_CORRECTED, CMAttitudeReferenceFrameXArbitraryCorrectedZVertical);
+
 #pragma Public APIs
-
-
 
 - (void)startMovementUpdates:(id)args
 {
+    ENSURE_UI_THREAD(startMovementUpdates, args);
+    ENSURE_SINGLE_ARG(args, NSDictionary);
     
-    TiThreadPerformOnMainThread(^{[self startUpdating:args];}, NO);
+    BOOL startLocationUpdates = [TiUtils boolValue:[args objectForKey : @"location"]];
+    BOOL startRotationUpdates = [TiUtils boolValue:[args objectForKey : @"rotation"]];
+    
+    if(startRotationUpdates) {
+        
+        NSNumber *rotationReferenceFrame = [args objectForKey : @"rotationReferenceFrame"];
+        
+        if (rotationReferenceFrame != NULL) {
+            
+            if([rotationReferenceFrame isEqual:self.ROTATION_REFERENCE_FRAME_TRUE_NORTH]) {
+                
+                self.locationManager.desiredAccuracy = kCLLocationAccuracyThreeKilometers;
+                [self.locationManager startUpdatingLocation];   
+            }
+            
+            [self.motionManager startDeviceMotionUpdatesUsingReferenceFrame:[rotationReferenceFrame doubleValue]];
+        } else {
+            [self.motionManager startDeviceMotionUpdatesUsingReferenceFrame:CMAttitudeReferenceFrameXArbitraryCorrectedZVertical];
+        }
+    }
+    
+    if(startLocationUpdates) {
+        
+        NSNumber *locationAccuracy = [args objectForKey : @"locationAccuracy"];
+        
+        if(locationAccuracy != NULL) {
+            self.locationManager.desiredAccuracy = [locationAccuracy doubleValue];
+        } else {
+            self.locationManager.desiredAccuracy = kCLLocationAccuracyThreeKilometers;
+        }
+        
+        [self.locationManager startUpdatingLocation];   
+    }
+    
+    NSLog(@"[INFO] started movement updates.");
 }
 
 - (void)stopMovementUpdates:(id)args
-{
-    TiThreadPerformOnMainThread(^{[self stopUpdating];}, NO);
+{    
+    [self.locationManager stopUpdatingLocation];
+    [self.motionManager stopDeviceMotionUpdates];
+    
+    NSLog(@"[INFO] stopped movement updates.");
 }
 
 - (NSDictionary *) currentMovement
 {
     NSDictionary *location = [NSDictionary dictionaryWithObjectsAndKeys:
-                              [NSNumber numberWithDouble:locationManager.location.coordinate.longitude], @"longitude",
-                              [NSNumber numberWithDouble:locationManager.location.coordinate.latitude], @"latitude",
-                              [NSNumber numberWithDouble:locationManager.location.altitude], @"altitude",
+                              [NSNumber numberWithDouble:self.locationManager.location.coordinate.longitude], @"longitude",
+                              [NSNumber numberWithDouble:self.locationManager.location.coordinate.latitude], @"latitude",
+                              [NSNumber numberWithDouble:self.locationManager.location.altitude], @"altitude",
                               nil];
     
     NSDictionary *rotation = [NSDictionary dictionaryWithObjectsAndKeys:
-                              [NSNumber numberWithDouble:motionManager.deviceMotion.attitude.roll], @"roll",
-                              [NSNumber numberWithDouble:motionManager.deviceMotion.attitude.pitch], @"pitch",
-                              [NSNumber numberWithDouble:motionManager.deviceMotion.attitude.yaw], @"yaw",
+                              [NSNumber numberWithDouble:self.motionManager.deviceMotion.attitude.roll], @"roll",
+                              [NSNumber numberWithDouble:self.motionManager.deviceMotion.attitude.pitch], @"pitch",
+                              [NSNumber numberWithDouble:self.motionManager.deviceMotion.attitude.yaw], @"yaw",
                               nil];
     NSDictionary *movementData = [NSDictionary dictionaryWithObjectsAndKeys:
                                   location, @"location",

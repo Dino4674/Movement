@@ -17,10 +17,7 @@ var roll = Titanium.UI.createLabel({
 	//textAlign:'center',
 	width : 'auto'
 });
-roll.addEventListener('click', function(e) {
-	stop = true;
-	alert('click')
-});
+
 var pitch = Titanium.UI.createLabel({
 	color : '#999',
 	top : 230,
@@ -83,8 +80,12 @@ win1.add(lat);
 win1.add(lon);
 win1.add(alt);
 
-win1.open();
+win1.addEventListener('click', function(e) {
+	stop = true;
+	alert('click')
+});
 
+win1.open();
 
 var curr;
 var movement = require('ti.movement');
@@ -98,26 +99,29 @@ Ti.API.info('Ref frame magn: ' + movement.ROTATION_REFERENCE_FRAME_MAGNETIC_NORT
 Ti.API.info('Ref frame corr: ' + movement.ROTATION_REFERENCE_FRAME_CORRECTED)
 
 movement.startMovementUpdates({
-	//location : false,
+	location : true,
 	rotation : true,
 	//locationAccuracy : movement.LOCATION_ACCURACY_BEST_FOR_NAVIGATION,
-	//rotationReferenceFrame : movement.ROTATION_REFERENCE_FRAME_CORRECTED
+	rotationReferenceFrame : movement.ROTATION_REFERENCE_FRAME_TRUE_NORTH
 });
 
 function s() {
-	if(!stop) {
-		curr = movement.currentMovement;	
-		//Ti.API.info(curr)
-	
+	if (!stop) {
+		curr = movement.currentMovement;
+
 		roll.setText('Roll: ' + curr.rotation.roll);
 		pitch.setText('Pitch: ' + curr.rotation.pitch);
 		yaw.setText('Yaw: ' + curr.rotation.yaw);
 		lat.setText('Lat: ' + curr.location.latitude);
 		lon.setText('Lon: ' + curr.location.longitude);
 		alt.setText('Alt: ' + curr.location.altitude);
-				
-		setTimeout(s, 0);
-	} else return;
 
+		setTimeout(s, 0);
+	} else {
+		movement.stopMovementUpdates();
+		
+		return;
+	}
 }
-setTimeout(s, 0);
+
+setTimeout(s, 0); 
